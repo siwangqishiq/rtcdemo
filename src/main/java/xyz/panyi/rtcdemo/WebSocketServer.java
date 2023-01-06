@@ -20,6 +20,7 @@ public class WebSocketServer {
     @OnOpen
     public void onOpen(Session session) {
         logger.info(TAG , "on open");
+
         try {
             session.getBasicRemote().sendText("hello from server");
         } catch (IOException e) {
