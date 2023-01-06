@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>RTC展示</title>
+</head>
+
+<body>
+    <div id="main">
+        <video id="local_camera" width="300" height="250" style="background-color: beige;" autoplay></video>
+        <p>
+            <button id="open_camera_btn">打开</button>
+            <button id="close_camera_btn">关闭</button>
+        </p>
+
+        <video id="remote_camera" width="300" height="250" style="background-color: beige;" playsinline autoplay></video>
+    </div>
+</body>
+
+<script src="js/adapter-latest.js"></script>
+<script>
+    var openBtn = document.getElementById("open_camera_btn");
+    openBtn.onclick = doOpenCamera;
+
+    var closeBtn = document.getElementById("close_camera_btn");
+    closeBtn.onclick = doCloseCamera;
+
+    var localVideo = document.getElementById("local_camera");
+
+    navigator.getUserMedia = navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia;
+
+    if (navigator.getUserMedia) {
+        console.log("游览器支持webrtc");
+    } else {
+        alert("不支持Webrtc");
+    }
+
+    function doOpenCamera() {
+        console.log("open camera");
+        var constraints = {
+            video: true
+        };
+
+        navigator.getUserMedia(constraints, function onSuccess(stream) {
+            console.log("getUserMedia onsuccess!");
+            localVideo.srcObject = stream;
+            localVideo.autoplay = true;
+        }, function onError() {
+            console.log("getUserMedia onError!");
+        });
+    }
+
+    function doCloseCamera() {
+        console.log("close camera");
+        localVideo.srcObject = null;
+    }
+</script>
+
+</html>
