@@ -23,6 +23,7 @@ public class WebSocketChannel {
         mSession = session;
 
         sendMessage("hello from server");
+        WebSocketManager.getInstance().addWebSocketChannel(this);
     }
 
     public void sendMessage(final String msg){
@@ -39,12 +40,14 @@ public class WebSocketChannel {
     @OnClose
     public void onClose() {
         logger.info("on close");
+        WebSocketManager.getInstance().removeWebSocketChannel(this);
     }
 
     @OnMessage
     public void onMessage(String message, Session session) {
         logger.info("on onMessage : " + message);
         logger.info("on onMessage session : " + session);
+        WebSocketManager.getInstance().broadcastMessage(this , message);
     }
 
 
