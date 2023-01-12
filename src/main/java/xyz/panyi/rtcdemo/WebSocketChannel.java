@@ -8,23 +8,28 @@ import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
-@ServerEndpoint(value = "/signal")
 @Component
-public class WebSocketServer {
-    public static final String TAG = "WebSocket";
+@ServerEndpoint(value = "/signal")
+public class WebSocketChannel {
+    private static Logger logger = LoggerFactory.getLogger(WebSocketChannel.class);
 
-    private static Logger logger = LoggerFactory.getLogger(WebSocketServer.class);
+    private Session mSession;
 
     /**
      * 连接建立成功调用的方法*/
     @OnOpen
     public void onOpen(Session session) {
-        logger.info(TAG , "on open");
+        logger.info("on open session : " + session);
+        mSession = session;
 
+        sendMessage("hello from server");
+    }
+
+    public void sendMessage(final String msg){
         try {
-            session.getBasicRemote().sendText("hello from server");
+            mSession.getBasicRemote().sendText(msg);
         } catch (IOException e) {
-            logger.error(TAG , e.toString());
+            logger.error(e.toString());
         }
     }
 
@@ -33,12 +38,13 @@ public class WebSocketServer {
      */
     @OnClose
     public void onClose() {
-        logger.info(TAG , "on close");
+        logger.info("on close");
     }
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        logger.info(TAG , "on onMessage : " + message);
+        logger.info("on onMessage : " + message);
+        logger.info("on onMessage session : " + session);
     }
 
 
@@ -49,6 +55,6 @@ public class WebSocketServer {
      */
     @OnError
     public void onError(Session session, Throwable error) {
-        logger.info(TAG , "on Error : " + error);
+        logger.info("on Error : " + error +"  session :" + session);
     }
 }
