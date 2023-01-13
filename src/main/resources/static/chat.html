@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html lang="ch">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>Chat</title>
+</head>
+
+<body>
+    <div id="main">
+        <div id="content" style="background-color: beige; width: 400px;min-height: 32px;"></div>
+
+        <input id="input" />
+        <button id="send_btn" type="button">发送</button>
+    </div>
+</body>
+
+<script>
+    var hostUrl = window.location.host;
+    var wsUrl = "ws://" + hostUrl + "/signal"
+    console.log("wsUrl : " + wsUrl);
+
+    var sendBtn = document.getElementById("send_btn");
+    var inputEditText = document.getElementById("input");
+    var contentText = document.getElementById("content");
+
+    var socket = new WebSocket(wsUrl);
+    socket.onopen = function(event) {
+        console.log("onopen");
+    };
+
+    socket.onmessage = function(event) {
+        console.log("onmessage");
+        console.log(event);
+        contentText.innerHTML = event.data;
+    };
+
+    socket.onclose = function(event) {
+        console.log("onclose : " + event);
+    };
+
+    socket.onerror = function(event) {
+        console.log("onerror : " + event);
+    }
+
+    sendBtn.onclick = function() {
+        var inputContent = inputEditText.value;
+        inputEditText.value = "";
+        console.log("input:" + inputContent);
+        socket.send(inputContent);
+    }
+</script>
+
+</html>
