@@ -1,5 +1,6 @@
 package xyz.panyi.rtcdemo;
 
+import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -22,7 +23,8 @@ public class WebSocketChannel {
         logger.info("on open session : " + session);
         mSession = session;
 
-        sendMessage("hello from server");
+        // sendMessage("hello from server");
+        sendJsonMessage("hello" , "hello from server");
         WebSocketManager.getInstance().addWebSocketChannel(this);
     }
 
@@ -32,6 +34,14 @@ public class WebSocketChannel {
         } catch (IOException e) {
             logger.error(e.toString());
         }
+    }
+
+    public void sendJsonMessage(String cmd , String data){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("cmd" , cmd);
+        jsonObject.put("data" , data);
+
+        sendMessage(jsonObject.toJSONString());
     }
 
     /**

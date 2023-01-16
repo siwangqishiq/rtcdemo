@@ -26,7 +26,6 @@
 
     var closeBtn = document.getElementById("close_camera_btn");
     closeBtn.onclick = doCloseCamera;
-
     var localVideo = document.getElementById("local_camera");
 
     navigator.getUserMedia = navigator.getUserMedia ||
@@ -43,7 +42,7 @@
     function doOpenCamera() {
         console.log("open camera");
         var constraints = {
-            video: true
+            video: true,
         };
 
         navigator.getUserMedia(constraints, function onSuccess(stream) {
