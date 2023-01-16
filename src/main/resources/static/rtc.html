@@ -8,6 +8,9 @@
 </head>
 
 <body>
+    <p>
+        chrome://flags/#unsafely-treat-insecure-origin-as-secure
+    </p>
     <div id="main">
         <video id="local_camera" width="300" height="250" style="background-color: beige;" autoplay></video>
         <p>
@@ -75,6 +78,7 @@
         console.log("open camera");
         var constraints = {
             'video': true,
+            'audio': true
         };
 
         navigator.mediaDevices.getUserMedia(constraints)
