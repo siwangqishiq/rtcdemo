@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>RtcDemo</title>
+</head>
+
+<body>
+    <div id="main">
+        <video id="local_camera" width="300" height="250" style="background-color: beige;" autoplay></video>
+        <p>
+            <button id="make_call_btn">拨打</button>
+            <button id="close_camera_btn">关闭</button>
+        </p>
+
+        <video id="remote_camera" width="300" height="250" style="background-color: beige;" playsinline autoplay></video>
+    </div>
+</body>
+
+<script>
+    var openBtn = document.getElementById("make_call_btn");
+    openBtn.onclick = startRtc;
+
+    var closeBtn = document.getElementById("close_camera_btn");
+    closeBtn.onclick = closeRtc;
+
+    var localVideo = document.getElementById("local_camera");
+    var remoteVideo = document.getElementById("remote_camera");
+
+    var peerConnection = null;
+
+    // var hostUrl = '127.0.0.1:9999';
+    var hostUrl = window.location.host;
+    var wsUrl = "ws://" + hostUrl + "/signal"
+    console.log("wsUrl : " + wsUrl);
+    var socket = new WebSocket(wsUrl);
+    socket.onopen = function(event) {
+        console.log("onopen");
+    };
+
+    socket.onmessage = function(event) {
+        var jsonData = JSON.parse(event.data);
+        // console.log(jsonData.cmd);
+        var cmd = jsonData.cmd;
+        switch (cmd) {
+            case 'hello':
+                handleHelloSignal(jsonData);
+                break;
+            case 'answer':
+                handleAnswerSignal(jsonData);
+                break;
+            case 'offer':
+                handleOffserSignal(jsonData);
+                break;
+            case 'icecandidate':
+                handleIceCandidataSignal(jsonData);
+                break;
+            case 'close':
+                break;
+        } //end switch
+    };
+
+    socket.onclose = function(event) {
+        console.log("onclose : " + event);
+    };
+
+    socket.onerror = function(event) {
+        console.log("onerror : " + event);
+    }
+
+
+    function startRtc() {
+        console.log("open camera");
+        var constraints = {
+            'video': true,
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                console.log("getUserMedia onsuccess!");
+                localVideo.srcObject = stream;
+                createPeerConnection(stream);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }
+
+    function createPeerConnection(stream) {
+        const configuration = {
+            'iceServers': [{
+                'urls': 'stun:stun.l.google.com:19302'
+            }]
+        }
+
+        if (peerConnection == null) {
+            buildPeerConnection();
+            //add local track
+            stream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, stream);
+            });
+
+            addPeerConnectionListener();
+
+            peerConnection.createOffer().then(offer => {
+                console.log("peer connection createOffer success");
+                peerConnection.setLocalDescription(offer);
+
+                var msg = buildSignalData('offer', offer);
+                socket.send(msg);
+            }).catch(error => {
+                console.log("peer connection createOffer error");
+                console.log(error);
+            });
+        }
+
+    }
+
+    function handleHelloSignal(data) {
+        // console.log(data);
+    }
+
+    function handleOffserSignal(jsonData) {
+        console.log("handle offer : ");
+        console.log(jsonData.data);
+
+        var constraints = {
+            'video': true,
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                localVideo.srcObject = stream;
+
+                buildPeerConnection();
+                //add local track
+                stream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                addPeerConnectionListener();
+
+                peerConnection.setRemoteDescription(new RTCSessionDescription(jsonData.data));
+
+                peerConnection.createAnswer().then(answer => {
+                    peerConnection.setLocalDescription(answer);
+
+                    var msg = buildSignalData('answer', answer);
+                    socket.send(msg);
+
+                    console.log("send answer:");
+                    console.log(answer);
+                });
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }
+
+    function handleAnswerSignal(jsonData) {
+        console.log("hanlde answer:" + jsonData.data);
+        console.log(jsonData.data);
+        peerConnection.setRemoteDescription(new RTCSessionDescription(jsonData.data));
+    }
+
+    function handleIceCandidataSignal(jsonData) {
+        console.log("handleIceCandidataSignal :");
+        if (peerConnection != null) {
+            peerConnection.addIceCandidate(jsonData.data)
+                .then(result => {
+                    console.log("addIceCandidate success");
+                })
+                .catch(error => {
+                    console.log("addIceCandidate error!");
+                });
+        }
+    }
+
+    function handleCloseSignal(data) {
+        // console.log(data);
+    }
+
+    function closeRtc() {
+        console.log("close camera");
+        localVideo.srcObject = null;
+    }
+
+    function buildSignalData(cmd, data) {
+        var jsonData = {};
+        jsonData['cmd'] = cmd;
+        jsonData['data'] = data;
+
+        return JSON.stringify(jsonData);
+    }
+
+    function buildPeerConnection() {
+        const iceConfiguration = {
+            'iceServers': [{
+                urls: 'turn:101.34.23.152:3478',
+                username: 'panyi',
+                credential: '123456'
+            }]
+        }
+
+        peerConnection = new RTCPeerConnection(iceConfiguration);
+    }
+
+    function addPeerConnectionListener() {
+        if (peerConnection == null) {
+            return;
+        }
+
+        console.log('peerConnection addPeerConnectionListener');
+
+        peerConnection.addEventListener('icecandidate', event => {
+            console.log('icecandidate:');
+            // console.log(event);
+            var msg = buildSignalData("icecandidate", event.candidate);
+            socket.send(msg);
+        });
+
+        peerConnection.addEventListener('connectionstatechange', event => {
+            console.log('connectionstatechange:' + peerConnection.connectionState);
+            console.log(event);
+        });
+
+        peerConnection.addEventListener('track', async(event) => {
+            console.log('peerConnection addEventListener track');
+            const [remoteStream] = event.streams;
+            remoteVideo.srcObject = remoteStream;
+        });
+    }
+</script>
+
+</html>
