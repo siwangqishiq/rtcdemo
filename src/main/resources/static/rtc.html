@@ -35,7 +35,8 @@
     var peerConnection = null;
 
     // var hostUrl = '127.0.0.1:9999';
-    var hostUrl = window.location.host;
+    // var hostUrl = window.location.host;
+    var hostUrl = '10.242.142.129:9999';
     var wsUrl = "ws://" + hostUrl + "/signal"
     console.log("wsUrl : " + wsUrl);
     var socket = new WebSocket(wsUrl);
@@ -55,7 +56,7 @@
                 handleAnswerSignal(jsonData);
                 break;
             case 'offer':
-                handleOffserSignal(jsonData);
+                handleOfferSignal(jsonData);
                 break;
             case 'icecandidate':
                 handleIceCandidataSignal(jsonData);
@@ -126,12 +127,13 @@
         // console.log(data);
     }
 
-    function handleOffserSignal(jsonData) {
+    function handleOfferSignal(jsonData) {
         console.log("handle offer : ");
         console.log(jsonData.data);
 
         var constraints = {
             'video': true,
+            'audio': true
         };
 
         navigator.mediaDevices.getUserMedia(constraints)
@@ -153,9 +155,8 @@
 
                     var msg = buildSignalData('answer', answer);
                     socket.send(msg);
-
-                    console.log("send answer:");
-                    console.log(answer);
+                    // console.log("send answer:");
+                    // console.log(answer);
                 });
             })
             .catch(error => {
@@ -164,13 +165,19 @@
     }
 
     function handleAnswerSignal(jsonData) {
-        console.log("hanlde answer:" + jsonData.data);
+        console.log("hanlde answer:");
         console.log(jsonData.data);
-        peerConnection.setRemoteDescription(new RTCSessionDescription(jsonData.data));
+        peerConnection.setRemoteDescription(new RTCSessionDescription(jsonData.data))
+            .then((data) => {
+                console.log("set remote description success");
+            }).catch((err)=> {
+                console.log("set remote description error");
+            });
     }
 
     function handleIceCandidataSignal(jsonData) {
-        console.log("handleIceCandidataSignal :");
+        console.log("handle IceCandidataSignal :");
+        console.log(jsonData);
         if (peerConnection != null) {
             peerConnection.addIceCandidate(jsonData.data)
                 .then(result => {
@@ -205,6 +212,8 @@
                 urls: 'turn:101.34.23.152:3478',
                 username: 'panyi',
                 credential: '123456'
+            },{
+                urls:'stun:101.34.23.152:3478'
             }]
         }
 
@@ -220,19 +229,20 @@
 
         peerConnection.addEventListener('icecandidate', event => {
             console.log('icecandidate:');
-            // console.log(event);
+            console.log(event);
             var msg = buildSignalData("icecandidate", event.candidate);
             socket.send(msg);
         });
 
         peerConnection.addEventListener('connectionstatechange', event => {
             console.log('connectionstatechange:' + peerConnection.connectionState);
-            console.log(event);
+            // console.log(event);
         });
 
-        peerConnection.addEventListener('track', async(event) => {
-            console.log('peerConnection addEventListener track');
-            const [remoteStream] = event.streams;
+        peerConnection.addEventListener('track', (event) => {
+            console.log('peerConnection track');
+
+            var remoteStream = event.streams[0];
             remoteVideo.srcObject = remoteStream;
         });
     }
