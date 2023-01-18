@@ -36,8 +36,8 @@
     var iceCandidateList = [];
 
     // var hostUrl = '127.0.0.1:9999';
-    // var hostUrl = window.location.host;
-    var hostUrl = '10.242.142.129:9999';
+    var hostUrl = window.location.host;
+    // var hostUrl = '10.242.142.129:9999';
     var wsUrl = "ws://" + hostUrl + "/signal"
     console.log("wsUrl : " + wsUrl);
     var socket = new WebSocket(wsUrl);
