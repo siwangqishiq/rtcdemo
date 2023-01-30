@@ -222,9 +222,8 @@
                 urls: 'turn:101.34.23.152:3478',
                 username: 'panyi',
                 credential: '123456'
-            }, {
-                urls: 'stun:101.34.23.152:3478'
-            }]
+            }],
+           'iceTransportPolicy':'relay'
         }
 
         peerConnection = new RTCPeerConnection(iceConfiguration);
