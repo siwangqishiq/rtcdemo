@@ -27,7 +27,9 @@
     openBtn.onclick = startRtc;
 
     var closeBtn = document.getElementById("close_camera_btn");
-    closeBtn.onclick = closeRtc;
+    closeBtn.onclick = function() {
+        closeRtc(true);
+    };
 
     var localVideo = document.getElementById("local_camera");
     var remoteVideo = document.getElementById("remote_camera");
@@ -63,6 +65,7 @@
                 handleIceCandidataSignal(jsonData);
                 break;
             case 'close':
+                handleCloseSignal(jsonData);
                 break;
         } //end switch
     };
@@ -201,11 +204,26 @@
 
     function handleCloseSignal(data) {
         // console.log(data);
+        closeRtc(false);
     }
 
-    function closeRtc() {
+    function closeRtc(sendSingal) {
+        if (peerConnection != null) {
+            peerConnection.close();
+            peerConnection.onicecandidate = null;
+            peerConnection.ontrack = null;
+
+            peerConnection = null;
+        }
+
         console.log("close camera");
         localVideo.srcObject = null;
+        remoteVideo.srcObject = null;
+
+        if (sendSingal) {
+            var msg = buildSignalData('close', {});
+            socket.send(msg);
+        }
     }
 
     function buildSignalData(cmd, data) {
@@ -223,7 +241,7 @@
                 username: 'panyi',
                 credential: '123456'
             }],
-           'iceTransportPolicy':'relay'
+            'iceTransportPolicy': 'relay'
         }
 
         peerConnection = new RTCPeerConnection(iceConfiguration);
